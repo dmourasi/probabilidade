@@ -146,20 +146,17 @@ rug(x = Pobs)
 set.seed(230616)
 Simulate <- 1000
 
-# inversa da Maxwell
-iF_maxwell <- function(u, alpha=1.0){
-  sqrt(-2 * alpha^2 * log(1 - u))
-}
-
 #simular a amostra
-simulate_maxwell <- function(n, alpha=1.0){
-  u <- runif(Simulate)
-  sapply(u, iF_maxwell, alpha=alpha)
-}
+#simulate_maxwell <- function(n, alpha=1.0){
+#  u <- runif(Simulate)
+#  sapply(u, iF_maxwell, alpha=alpha)
+#}
+cfunc <- function(x, n)  (mean(x) - 1/alpha) * (alpha * sqrt(n))
+
 
 
 alpha <- 1.0
-DadosS <- data.frame(
+Dados_teste <- data.frame(
   x = c(simulate_maxwell(5, alpha=alpha),
         simulate_maxwell(50, alpha=alpha),
         simulate_maxwell(100, alpha=alpha),
@@ -168,17 +165,17 @@ DadosS <- data.frame(
 )
 
 # verificar o erro ou funcionalidade
-DadosS <- data.frame(
-  x = c(apply(matrix(rexp(Simulate * 5,  alpha), Simulate), 1, simulate_maxwell, 5),
-        apply(matrix(rexp(Simulate * 50, alpha), Simulate), 1, simulate_maxwell, 50),
-        apply(matrix(rexp(Simulate * 100, alpha), Simulate), 1, simulate_maxwell, 100),
-        apply(matrix(rexp(Simulate * 500, alpha), Simulate), 1, simulate_maxwell, 500)
+DadoS <- data.frame(
+  x = c(apply(matrix(rexp(Simulate * 5,  alpha), Simulate), 1, cfunc, 5),
+        apply(matrix(rexp(Simulate * 50, alpha), Simulate), 1, cfunc, 50),
+        apply(matrix(rexp(Simulate * 100, alpha), Simulate), 1, cfunc, 100),
+        apply(matrix(rexp(Simulate * 500, alpha), Simulate), 1, cfunc, 500)
         ),  Amostra = factor(rep(c(5, 50, 100, 500), rep(Simulate, 4))))
 ###
 
 
 # Plotar os resultados
-ggplot(DadosS, aes(x = x, fill = Amostra)) + 
+ggplot(DadoS, aes(x = x, fill = Amostra)) + 
   geom_histogram(binwidth=.3, col = "black", aes(y = ..density..)) +    
   scale_fill_brewer(palette="Spectral") +
   stat_function(fun = dnorm, linewidth = 2, col="black") +
@@ -189,3 +186,18 @@ ggplot(DadosS, aes(x = x, fill = Amostra)) +
 
 ```
 
+```{r}
+shapiro.test(DadoS[1:1000, 1])
+
+```
+
+
+```{r}
+shapiro.test(DadoS[3001:4000, 1])
+
+```
+
+```{r}
+ks.test(maxwell_sample, pexp, 0.5)
+
+```
