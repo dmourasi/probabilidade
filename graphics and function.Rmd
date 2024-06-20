@@ -1,6 +1,6 @@
 ---
 title: "Probabilidade"
-author: "Daniel e Ieda"
+author: "Daniel Ieda"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -20,7 +20,7 @@ Fx <- function(x, alpha=1.0){
 
 # Definindo a inversa da função de distribuição acumulada da distribuição Maxwell
 iFx <- function(u, alpha=1.0){
-    uniroot(function(x) F_maxwell(x, alpha) - u, lower = 0, upper = 10)$root
+    uniroot(function(x) Fx(x, alpha) - u, lower = 0, upper = 10)$root
 }
 
 ```
@@ -87,23 +87,23 @@ ggplot(dados, aes(x = Maxwell)) +
 ```
 
 ```{r}
-# Histograma e fdp
+# Histograma e o gráfico da fdp
 hist(maxwell_sample, prob = TRUE, ylab = "Densidade", xlab = "Valores simulados", main = "")
-curve(f_maxwell(x, alpha), add = TRUE, col = 2)
+curve(fx, add = TRUE, col = 2)
 rug(maxwell_sample)
 ```
 
 ```{r}
 # Plot da densidade com a fdp sobreposta
 plot(density(maxwell_sample, from = 0), ylab = "Densidade", xlab = "Valores simulados", main = "")
-curve(f_maxwell(x, alpha), add = TRUE, col = 2)
+curve(fx, add = TRUE, col = 2)
 rug(maxwell_sample)
 ```
 
 ```{r}
 # Histograma e fdp
 hist(maxwell_sample, prob = TRUE, ylab = "Densidade", xlab = "Valores simulados", main = "")
-curve(f_maxwell(x, alpha), add = TRUE, col = 2)
+curve(fx, add = TRUE, col = 2)
 rug(maxwell_sample)
 ```
 
@@ -189,11 +189,3 @@ ggplot(DadosS, aes(x = x, fill = Amostra)) +
 
 ```
 
-```{r}
-
-```
-
-
-```{r}
-
-```
