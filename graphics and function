@@ -1,0 +1,199 @@
+---
+title: "Probabilidade"
+author: "Daniel e Ieda"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+
+# Definindo a função densidade de probabilidade da distribuição Maxwell
+fx <- function(x, alpha=1.0){
+    sqrt(2/pi) * (x^2 / alpha^3) * exp(-x^2 / (2 * alpha^2))
+}
+
+# Definindo a função de distribuição acumulada da distribuição Maxwell
+Fx <- function(x, alpha=1.0){
+    erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
+    erf(x / (sqrt(2) * alpha)) - sqrt(2/pi) * (x / alpha) * exp(-x^2 / (2 * alpha^2))
+}
+
+# Definindo a inversa da função de distribuição acumulada da distribuição Maxwell
+iFx <- function(u, alpha=1.0){
+    uniroot(function(x) F_maxwell(x, alpha) - u, lower = 0, upper = 10)$root
+}
+
+```
+
+```{r}
+# Gerar uma amostra de tamanho 1000
+set.seed(230616)
+u <- runif(min=0, max=1, 1000)
+
+# Aplicar a inversa da fda para obter números da distribuição Maxwell
+alpha <- 1.0
+maxwell_sample <- sapply(u, iFx, alpha=alpha)
+
+# Exibindo os primeiros valores da amostra
+head(maxwell_sample)
+
+summary(maxwell_sample)
+```
+
+```{r}
+#Gerador de números baseado em markov
+
+set.seed(230616)
+
+n <- 1000    
+sig <- 0.1 
+
+
+markov_chain <- numeric(n)
+markov_chain[1] <- runif(1, min=0, max=1)  
+
+for(i in 2:n) {
+  new_value <- markov_chain[i-1] + rnorm(1, mean=0, sd=sig)
+  
+  # Garantindo que os valores fiquem entre 0 e 1
+  markov_chain[i] <- max(0, min(1, new_value))
+}
+
+head(markov_chain)
+```
+
+```{r}
+library(ggplot2)
+library(grid)
+
+# Criar o dataframe para o ggplot
+dados <- data.frame(Maxwell = maxwell_sample)
+
+# Gerar o gráfico
+ggplot(dados, aes(x = Maxwell)) +
+  
+  geom_histogram(aes(y = after_stat(..density..)),
+                 col = "black", fill = "pink", binwidth = 0.2) +  
+  
+  labs(title = "Distribuição Maxwell Simulada", x = "Valores Simulados", y = "Densidade") +
+  
+  geom_density(alpha = 0.5, linewidth = 2.0, col = "darkgreen") +     # Linha de densidade
+
+  theme(axis.title.x = element_text(color = "black", size = 18, face = "bold"),
+        axis.title.y = element_text(color = "black", size = 18, face = "bold")) +
+  
+  theme_light()
+
+```
+
+```{r}
+# Histograma e fdp
+hist(maxwell_sample, prob = TRUE, ylab = "Densidade", xlab = "Valores simulados", main = "")
+curve(f_maxwell(x, alpha), add = TRUE, col = 2)
+rug(maxwell_sample)
+```
+
+```{r}
+# Plot da densidade com a fdp sobreposta
+plot(density(maxwell_sample, from = 0), ylab = "Densidade", xlab = "Valores simulados", main = "")
+curve(f_maxwell(x, alpha), add = TRUE, col = 2)
+rug(maxwell_sample)
+```
+
+```{r}
+# Histograma e fdp
+hist(maxwell_sample, prob = TRUE, ylab = "Densidade", xlab = "Valores simulados", main = "")
+curve(f_maxwell(x, alpha), add = TRUE, col = 2)
+rug(maxwell_sample)
+```
+
+```{r}
+# Definir a função de distribuição acumulada da distribuição Maxwell
+F_maxwell <- function(x, alpha=1.0){
+    erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
+    erf(x / (sqrt(2) * alpha)) - sqrt(2/pi) * (x / alpha) * exp(-x^2 / (2 * alpha^2))
+}
+
+# Plot da fda
+plot(ecdf(maxwell_sample), ylab = "fda", xlab = "Valores simulados", main = "")
+curve(F_maxwell(x, alpha), add = TRUE, col = 2, from = 0)
+
+```
+
+```{r}
+# Função de distribuição acumulada da distribuição Maxwell
+Fx <- function(x, alpha=1.0){
+    erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1
+    erf(x / (sqrt(2) * alpha)) - sqrt(2/pi) * (x / alpha) * exp(-x^2 / (2 * alpha^2))
+}
+
+# Frequências relativas acumuladas observadas
+Pobs <- (1:length(maxwell_sample)) / length(maxwell_sample)
+# Probabilidades acumuladas teóricas
+Pteo <- Fx(sort(maxwell_sample), alpha = alpha)
+
+# qq-plot
+plot(Pobs ~ Pteo,
+     xlab = "Frequências relativas acumuladas teóricas",
+     ylab = "Probabilidades acumuladas observadas")
+rug(x = Pteo, side = 2)
+rug(x = Pobs)
+
+```
+
+
+```{r}
+set.seed(230616)
+Simulate <- 1000
+
+# inversa da Maxwell
+iF_maxwell <- function(u, alpha=1.0){
+  sqrt(-2 * alpha^2 * log(1 - u))
+}
+
+#simular a amostra
+simulate_maxwell <- function(n, alpha=1.0){
+  u <- runif(Simulate)
+  sapply(u, iF_maxwell, alpha=alpha)
+}
+
+
+alpha <- 1.0
+DadosS <- data.frame(
+  x = c(simulate_maxwell(5, alpha=alpha),
+        simulate_maxwell(50, alpha=alpha),
+        simulate_maxwell(100, alpha=alpha),
+        simulate_maxwell(500, alpha=alpha)),
+  Amostra = factor(rep(c(5, 50, 100, 500), each=Simulate))
+)
+
+# verificar o erro ou funcionalidade
+DadosS <- data.frame(
+  x = c(apply(matrix(rexp(Simulate * 5,  alpha), Simulate), 1, simulate_maxwell, 5),
+        apply(matrix(rexp(Simulate * 50, alpha), Simulate), 1, simulate_maxwell, 50),
+        apply(matrix(rexp(Simulate * 100, alpha), Simulate), 1, simulate_maxwell, 100),
+        apply(matrix(rexp(Simulate * 500, alpha), Simulate), 1, simulate_maxwell, 500)
+        ),  Amostra = factor(rep(c(5, 50, 100, 500), rep(Simulate, 4))))
+###
+
+
+# Plotar os resultados
+ggplot(DadosS, aes(x = x, fill = Amostra)) + 
+  geom_histogram(binwidth=.3, col = "black", aes(y = ..density..)) +    
+  scale_fill_brewer(palette="Spectral") +
+  stat_function(fun = dnorm, linewidth = 2, col="black") +
+  facet_grid(. ~ Amostra) +
+  labs(title = "Distribuição Maxwell Simulada", x = "Valores simulados", y = "Densidade") +
+  theme(axis.title.x = element_text(color = "black", size = 18, face = "bold"),
+        axis.title.y = element_text(color = "black", size = 18, face = "bold"))
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
